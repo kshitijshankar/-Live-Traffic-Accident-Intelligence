@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic & Accident Intelligence Dashboard</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+
+    <!-- 1. CINEMATIC LANDING PAGE -->
+    <section id="landing-page" class="fullscreen-panel">
+        <div class="glow-bg"></div>
+        <div class="stars-overlay"></div>
+        
+        <div class="landing-content">
+            <h3 class="eyebrow">TRAFFIC & ACCIDENT INTELLIGENCE SYSTEM</h3>
+            <h1 class="glitch-title" data-text="Traffic & Accident Intelligence">Traffic & Accident Intelligence</h1>
+            <p class="subtitle">
+                Analyze traffic patterns, accident trends, risk zones, road conditions, and emergency response intelligence through a unified, data-driven smart city command center.
+            </p>
+            <button id="btn-go-next" class="btn-3d">
+                <span class="btn-bg"></span>
+                <span class="btn-glow"></span>
+                <span class="btn-content">GO NEXT <span class="arrow">→</span></span>
+            </button>
+        </div>
+
+    </section>
+
+    <!-- 2. LOADING SCREEN OVERLAY -->
+    <div id="loader-screen" class="hidden">
+        <div class="loader-content">
+            <div class="spinner">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
+            </div>
+            <h2 class="loader-text">Loading Traffic Intelligence...</h2>
+            <p class="loader-subtext">Optimizing and parsing 911 telemetry feed (31.5 MB)</p>
+            <div class="progress-bar-container">
+                <div id="loader-progress" class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ERROR SCREEN -->
+    <div id="error-screen" class="hidden">
+        <div class="error-content">
+            <div class="error-icon">⚠️</div>
+            <h2>Unable to load traffic intelligence data</h2>
+            <p id="error-message">Could not find or fetch the JSON dataset file.</p>
+            <div class="error-details">
+                Please verify that <code class="code-path">911.json</code> is located in the project root folder.
+            </div>
+            <button id="btn-retry" class="btn-3d retry-btn">RETRY CONNECTION</button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT WRAPPER -->
+    <div id="dashboard-wrapper" class="hidden">
+        
+        <!-- GLOBAL STICKY NAVIGATION BAR -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="brand-glow"></span>
+                <svg class="brand-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <div class="brand-text">
+                    <span class="title-main">INTELLIGENT TELEMETRY</span>
+                    <span class="title-sub">Smart City Command Center</span>
+                </div>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="nav-item active" data-tab="overview">
+                    <a href="#overview">
+                        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                        <span>Overview</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="traffic">
+                    <a href="#traffic">
+                        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>
+                        <span>Traffic Intelligence</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="accident">
+                    <a href="#accident">
+                        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        <span>Accident Intelligence</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="risk">
+                    <a href="#risk">
+                        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/></svg>
+                        <span>Risk Analysis</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-tab="emergency">
+                    <a href="#emergency">
+                        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm1 16h-2v-2h2v2zm0-4.5h-2V7h2v6.5z"/></svg>
+                        <span>Emergency Insights</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- GLOBAL FILTER AND CONTROL PANEL -->
+        <header class="filter-panel glass-panel">
+            <div class="panel-header">
+                <h3><span class="icon-pulse"></span> GLOBAL FILTERS</h3>
+                <span class="telemetry-info" id="telemetry-record-count">Records: Loading...</span>
+            </div>
+            
+            <div class="filters-grid">
+                <!-- Search -->
+                <div class="filter-group search-group">
+                    <label for="search-input">Search Incidents</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="search-input" placeholder="Search by location, keyword, ID...">
+                        <span class="search-clear" id="search-clear">&times;</span>
+                    </div>
+                </div>
+                
+                <!-- Township -->
+                <div class="filter-group">
+                    <label for="filter-twp">Township Location</label>
+                    <select id="filter-twp">
+                        <option value="ALL">All Townships</option>
+                    </select>
+                </div>
+                
+                <!-- Category -->
+                <div class="filter-group">
+                    <label>Incident Feed Category</label>
+                    <div class="btn-group-toggle" id="filter-category-group">
+                        <button class="btn-toggle active" data-val="ALL">All Feed</button>
+                        <button class="btn-toggle text-traffic" data-val="Traffic">Traffic</button>
+                        <button class="btn-toggle text-ems" data-val="EMS">EMS</button>
+                        <button class="btn-toggle text-fire" data-val="Fire">Fire</button>
+                    </div>
+                </div>
+                
+                <!-- Date Preset -->
+                <div class="filter-group">
+                    <label for="filter-date-preset">Date Period</label>
+                    <select id="filter-date-preset">
+                        <option value="ALL">All Time (Dec 2015 - Aug 2016)</option>
+                        <option value="7">Last 7 Days (Relative to Feed)</option>
+                        <option value="30">Last 30 Days (Relative to Feed)</option>
+                        <option value="CUSTOM">Custom Range</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Custom Date Range Picker (Hidden by default, shown when custom selected) -->
+            <div class="custom-date-row hidden" id="custom-date-container">
+                <div class="filter-group">
+                    <label for="filter-start-date">Start Date</label>
+                    <input type="date" id="filter-start-date" min="2015-12-10" max="2016-08-24">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-end-date">End Date</label>
+                    <input type="date" id="filter-end-date" min="2015-12-10" max="2016-08-24">
+                </div>
+                <button class="btn-glow-small" id="btn-apply-custom-date">Apply Range</button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD PANELS CONTROLLER -->
+        <main class="dashboard-content">
+            
+            <!-- ================= SECTION 1: OVERVIEW ================= -->
+            <section id="sec-overview" class="tab-panel active">
+                <div class="section-title-wrapper">
+                    <h2>Traffic Intelligence Overview</h2>
+                    <p>Real-time understanding of traffic conditions, accident activity, and road risk indicators.</p>
+                </div>
+                
+                <!-- KPI CARDS GRID -->
+                <div class="kpi-grid">
+                    <!-- Total Incidents / Calls -->
+                    <div class="kpi-card glass-panel 3d-card" data-tilt>
+                        <div class="kpi-glow cyan-glow"></div>
+                        <div class="kpi-icon text-cyan">📊</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Total Telemetry Logs</span>
+                            <span class="kpi-value" id="kpi-total-calls">0</span>
+                            <span class="kpi-trend text-green">▲ Active Stream</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Accidents -->
+                    <div class="kpi-card glass-panel 3d-card" data-tilt>
+                        <div class="kpi-glow red-glow"></div>
+                        <div class="kpi-icon text-red">💥</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Total Accidents</span>
+                            <span class="kpi-value" id="kpi-total-accidents">0</span>
+                            <span class="kpi-trend text-red" id="kpi-accidents-pct">0% of total</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Critical Incidents -->
+                    <div class="kpi-card glass-panel 3d-card" data-tilt>
+                        <div class="kpi-glow purple-glow"></div>
+                        <div class="kpi-icon text-purple">🚨</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Critical Alerts</span>
+                            <span class="kpi-value" id="kpi-critical-incidents">0</span>
+                            <span class="kpi-trend text-purple" id="kpi-critical-pct">0% severe</span>
+                        </div>
+                    </div>
+
+                    <!-- Busiest Township -->
+                    <div class="kpi-card glass-panel 3d-card" data-tilt>
+                        <div class="kpi-glow orange-glow"></div>
+                        <div class="kpi-icon text-orange">📍</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Primary Risk Hotspot</span>
+                            <span class="kpi-value text-small" id="kpi-hottest-location">NORRISTOWN</span>
+                            <span class="kpi-trend text-orange" id="kpi-hottest-count">0 incidents</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Average Response Delay -->
+                    <div class="kpi-card glass-panel 3d-card" data-tilt>
+                        <div class="kpi-glow blue-glow"></div>
+                        <div class="kpi-icon text-blue">⏱️</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Average Response Delay</span>
+                            <span class="kpi-value" id="kpi-avg-response">0m</span>
+                            <span class="kpi-trend text-blue">Dispatch lag</span>
+                        </div>
+                    </div>
+
+                    <!-- Congestion / Traffic Ratio -->
+                    <div class="kpi-card glass-panel 3d-card" data-tilt>
+                        <div class="kpi-glow yellow-glow"></div>
+                        <div class="kpi-icon text-yellow">🚗</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Traffic Feed Ratio</span>
+                            <span class="kpi-value" id="kpi-traffic-ratio">0%</span>
+                            <span class="kpi-trend text-yellow" id="kpi-traffic-congestion">Congested feed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OVERVIEW ANALYTICS CHARTS -->
+                <div class="charts-grid-2">
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Incident Trend Over Time</h4>
+                            <span class="chart-desc">Shows daily emergency event count</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-incident-trend"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Traffic vs Emergency Volume</h4>
+                            <span class="chart-desc">Comparative area chart over hour of day</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-volume-comparison"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid-2 margin-top">
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Incident Severity Distribution</h4>
+                            <span class="chart-desc">Based on derived severity mappings</span>
+                        </div>
+                        <div class="chart-body pie-body">
+                            <canvas id="chart-severity-pie"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Primary Incident Subcategories</h4>
+                            <span class="chart-desc">Ranked frequency of incident sub-types</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-subcategories-bar"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 2: TRAFFIC INTELLIGENCE ================= -->
+            <section id="sec-traffic" class="tab-panel">
+                <div class="section-title-wrapper">
+                    <h2>Traffic Intelligence</h2>
+                    <p>Dedicated analysis of traffic volume, peak hours, disabled vehicles, and congestion patterns.</p>
+                </div>
+
+                <div class="charts-grid-2">
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Traffic Incidents Peak Hour Analysis</h4>
+                            <span class="chart-desc">Total traffic volume mapped to hour of day (00:00 - 23:00)</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-traffic-hours"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Weekly Traffic Patterns</h4>
+                            <span class="chart-desc">Activity by day of the week (Monday - Sunday)</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-traffic-days"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid-2 margin-top">
+                    <!-- Congestion categories derived from traffic categories -->
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Traffic Incidents Breakdown</h4>
+                            <span class="chart-desc">Distribution of traffic subcategories (Vehicle Accident, Disabled Vehicle, Obstruction)</span>
+                        </div>
+                        <div class="chart-body pie-body">
+                            <canvas id="chart-traffic-subcategories"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Traffic hotspots -->
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Ranked Traffic Hotspots</h4>
+                            <span class="chart-desc">Townships with the highest concentration of traffic incidents</span>
+                        </div>
+                        <div class="hotspots-list" id="traffic-hotspots-container">
+                            <!-- Populated dynamically -->
+                            <div class="loading-placeholder">Processing hotspots...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 3: ACCIDENT INTELLIGENCE ================= -->
+            <section id="sec-accident" class="tab-panel">
+                <div class="section-title-wrapper">
+                    <h2>Accident Intelligence</h2>
+                    <p>Granular diagnostic metrics on vehicle collisions, injuries, and severity distribution.</p>
+                </div>
+
+                <div class="charts-grid-2">
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Monthly Accident Event Rate</h4>
+                            <span class="chart-desc">Accident trends grouped by month of the year</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-accident-months"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Accident Severity Distribution Matrix</h4>
+                            <span class="chart-desc">Derived critical vs minor accident distribution</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-accident-severity-bar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid-2 margin-top">
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Accident Sub-type Frequency</h4>
+                            <span class="chart-desc">Distribution of specific vehicle incident types</span>
+                        </div>
+                        <div class="chart-body pie-body">
+                            <canvas id="chart-accident-types-donut"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Weather / Environmental note panel -->
+                    <div class="chart-container glass-panel flex-info-card">
+                        <div class="chart-header">
+                            <h4>Environmental / Road Condition Telemetry</h4>
+                            <span class="chart-desc">Dataset field compatibility verification</span>
+                        </div>
+                        <div class="info-card-content">
+                            <div class="alert-icon-large">🔍</div>
+                            <h3>Weather Data Compatibility Note</h3>
+                            <p>
+                                The current telemetry feed does not contain discrete environmental attributes (such as precipitation or temperature). 
+                                However, we extract relevant environmental safety events from emergency descriptions:
+                            </p>
+                            <div class="dynamic-incident-tags" id="environmental-alerts-list">
+                                <!-- Populated dynamically by searching descriptions for "HAZARDOUS ROAD", "ICY", "SNOW", "RAIN", etc. -->
+                                <span class="tag tag-warning">Loading telemetry extraction...</span>
+                            </div>
+                            <p class="tag-footnote">
+                                Derived dynamically from incident reports.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 4: RISK ANALYSIS ================= -->
+            <section id="sec-risk" class="tab-panel">
+                <div class="section-title-wrapper">
+                    <h2>Risk Analysis Model</h2>
+                    <p>Data-derived analytical risk calculation engine mapping hazardous road zones.</p>
+                </div>
+
+                <div class="risk-model-grid">
+                    <!-- Map Container -->
+                    <div class="map-card glass-panel">
+                        <div class="chart-header">
+                            <h4>Geospatial Risk Heatmap</h4>
+                            <span class="chart-desc">Leaflet mapping of recent and severe telemetry records. Zoom and hover for details.</span>
+                        </div>
+                        <div id="risk-map" class="map-view"></div>
+                    </div>
+                    
+                    <!-- Risk Score Explanation & Top locations -->
+                    <div class="risk-info-panel">
+                        <div class="glass-panel risk-explanation">
+                            <h4>How Risk Score Works</h4>
+                            <p>
+                                The risk model derives a score (0 to 100) per township based on the following algorithm:
+                            </p>
+                            <ul class="risk-formula-list">
+                                <li>
+                                    <strong>Volume Weight (40%)</strong>: Township incident density normalized against the highest volume location in the county.
+                                </li>
+                                <li>
+                                    <strong>Severity Index (40%)</strong>: Average severity of events in the township (Critical=4, Severe=3, Moderate=2, Minor=1).
+                                </li>
+                                <li>
+                                    <strong>Traffic Congestion Weight (20%)</strong>: Percentage share of traffic/disabled vehicle alerts out of total emergency events.
+                                </li>
+                            </ul>
+                            <div class="risk-legend">
+                                <span class="badge badge-low">LOW (0 - 25)</span>
+                                <span class="badge badge-moderate">MODERATE (26 - 50)</span>
+                                <span class="badge badge-high">HIGH (51 - 75)</span>
+                                <span class="badge badge-critical">CRITICAL (76 - 100)</span>
+                            </div>
+                        </div>
+
+                        <!-- Top Risk Areas -->
+                        <div class="glass-panel risk-locations-panel margin-top">
+                            <h4>High-Risk Location Cards</h4>
+                            <div class="risk-locations-list" id="risk-cards-container">
+                                <!-- Populated dynamically with 3D tilt cards -->
+                                <div class="loading-placeholder">Computing township risk parameters...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 5: EMERGENCY INSIGHTS ================= -->
+            <section id="sec-emergency" class="tab-panel">
+                <div class="section-title-wrapper">
+                    <h2>Emergency Insights</h2>
+                    <p>Performance indicators assessing emergency response dispatch delays and telemetry status.</p>
+                </div>
+
+                <div class="charts-grid-2">
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Response Delay Distribution by Township</h4>
+                            <span class="chart-desc">Average minutes between call time and official timestamp log</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-response-by-twp"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container glass-panel">
+                        <div class="chart-header">
+                            <h4>Response Delay Trend</h4>
+                            <span class="chart-desc">Average dispatch log delay grouped by hour of the day</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-response-hour-trend"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CRITICAL INCIDENT LOG -->
+                <div class="critical-incident-container glass-panel margin-top">
+                    <div class="panel-header">
+                        <h4>🚨 Critical Incidents Feed</h4>
+                        <span class="chart-desc">Active severe emergency reports matching filters</span>
+                    </div>
+                    <div class="critical-log-table-wrapper">
+                        <table class="premium-table">
+                            <thead>
+                                <tr>
+                                    <th>Incident Title</th>
+                                    <th>Township Location</th>
+                                    <th>Logged Time</th>
+                                    <th>Response Delay</th>
+                                    <th>Coordinates</th>
+                                    <th>Severity Badge</th>
+                                </tr>
+                            </thead>
+                            <tbody id="critical-incidents-feed-body">
+                                <!-- Populated dynamically -->
+                                <tr>
+                                    <td colspan="6" class="table-empty">Reading emergency feed...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ================= GLOBAL DATA EXPLORER ================= -->
+            <section id="sec-explorer" class="data-explorer-section glass-panel margin-top">
+                <div class="panel-header-explorer">
+                    <div>
+                        <h3>📊 Comprehensive Telemetry Explorer</h3>
+                        <p class="explorer-subtitle">Sort, search, filter, and inspect raw telemetry feeds. Click rows for full metadata.</p>
+                    </div>
+                    <div class="explorer-controls">
+                        <span class="row-count-info" id="explorer-row-count">Showing 0 of 0 entries</span>
+                    </div>
+                </div>
+                
+                <div class="table-scroll-wrapper">
+                    <table class="premium-table explorer-table">
+                        <thead>
+                            <tr id="explorer-thead-row">
+                                <th class="sortable" data-col="title">Incident Title ⇅</th>
+                                <th class="sortable" data-col="twp">Township ⇅</th>
+                                <th class="sortable" data-col="addr">Address ⇅</th>
+                                <th class="sortable" data-col="timeStamp">Logged Time ⇅</th>
+                                <th class="sortable" data-col="zip">Zip Code ⇅</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="explorer-tbody">
+                            <tr>
+                                <td colspan="6" class="table-empty">Processing telemetry explorer...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Table Pagination -->
+                <div class="pagination-container">
+                    <button class="btn-page" id="btn-page-prev" disabled>← Previous</button>
+                    <span class="page-indicator" id="page-indicator">Page 1 of 1</span>
+                    <button class="btn-page" id="btn-page-next" disabled>Next →</button>
+                </div>
+            </section>
+            
+        </main>
+
+
+
+    </div>
+
+    <!-- CDNS AND JS CODES -->
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet.js Map CDN -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Application Logic Modules -->
+    <script src="js/telemetry_data.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
