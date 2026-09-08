@@ -118,6 +118,7 @@ TrafficAccidentIntelligence/
 ├── 📁 data/
 │   ├── 📁 raw/
 │   │   └── 911.json
+│   │
 │   └── 📁 processed/
 │
 ├── 📁 database/
@@ -135,19 +136,37 @@ TrafficAccidentIntelligence/
 │   └── views.sql
 │
 ├── 📁 dashboard/
-│   ├── frontend/
-│   └── backend/
+│   ├── 📁 frontend/
+│   │   ├── index.html
+│   │   │
+│   │   ├── 📁 css/
+│   │   │   └── style.css
+│   │   │
+│   │   └── 📁 js/
+│   │       ├── telemetry_data.js
+│   │       ├── data.js
+│   │       ├── charts.js
+│   │       ├── interactions.js
+│   │       └── app.js
+│   │
+│   └── 📁 backend/
+│       └── README.md
 │
 ├── 📁 reports/
 │   ├── Project_Report.pdf
 │   └── Documentation.docx
 │
-└── 📄 README.md
+├── 📁 images/
+│   ├── dashboard.png
+│   └── er_diagram.png
+│
+├── 📄 .gitignore
+├── 📄 README.md
+└── 📄 requirements.txt
+
+
 ```
 
-> 🔐 **Do not upload private credentials, API keys, passwords, personal information or other sensitive files to GitHub.**
-
----
 
 # Table of Contents
 
